@@ -34,6 +34,7 @@ private slots:
     void openSerialPort();
     void closeSerialPort();
     void TogglePushButton();
-
+    void readData();
+    void handleError(QSerialPort::SerialPortError error);
 };
 #endif // MAINWINDOW_H
