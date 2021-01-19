@@ -20,6 +20,8 @@ MainWindow::MainWindow(QWidget *parent)
     m_ui->actionDisconnect->setEnabled(false);
     m_ui->actionConfigure->setEnabled(true);
 
+    m_ui->statusBar->addWidget(m_status);
+
     connect(m_ui->pushButton,SIGNAL(clicked()),this,SLOT(TogglePushButton()));
     connect(m_ui->actionConnect, &QAction::triggered, this, &MainWindow::openSerialPort);
     connect(m_ui->actionDisconnect, &QAction::triggered, this, &MainWindow::closeSerialPort);
@@ -42,13 +44,13 @@ void MainWindow::openSerialPort()
         m_ui->actionConnect->setEnabled(false);
         m_ui->actionDisconnect->setEnabled(true);
         m_ui->actionConfigure->setEnabled(false);
-        //showStatusMessage(tr("Connected to %1 : %2, %3, %4, %5, %6")
-        //                  .arg(p.name).arg(p.stringBaudRate).arg(p.stringDataBits)
-        //                  .arg(p.stringParity).arg(p.stringStopBits).arg(p.stringFlowControl));
+        showStatusMessage(tr("Connected to %1 : %2, %3, %4, %5, %6")
+                          .arg(p.name).arg(p.stringBaudRate).arg(p.stringDataBits)
+                          .arg(p.stringParity).arg(p.stringStopBits).arg(p.stringFlowControl));
     } else {
         QMessageBox::critical(this, tr("Error"), m_serial->errorString());
 
-        //showStatusMessage(tr("Open error"));
+        showStatusMessage(tr("Open error"));
     }
 }
 //! [4]
@@ -62,7 +64,7 @@ void MainWindow::closeSerialPort()
     m_ui->actionConnect->setEnabled(true);
     m_ui->actionDisconnect->setEnabled(false);
     m_ui->actionConfigure->setEnabled(true);
-    //showStatusMessage(tr("Disconnected"));
+    showStatusMessage(tr("Disconnected"));
 }
 
 MainWindow::~MainWindow()
@@ -73,4 +75,8 @@ MainWindow::~MainWindow()
 void MainWindow::TogglePushButton() {
     pushButtonState = !pushButtonState;
     qDebug() << pushButtonState;
+}
+
+void MainWindow::showStatusMessage(const QString &message) {
+    m_status->setText(message);
 }

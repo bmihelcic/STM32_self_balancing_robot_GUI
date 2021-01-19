@@ -28,6 +28,8 @@ private:
     SettingsDialog *m_settings = nullptr;
     QSerialPort *m_serial = nullptr;
 
+    void showStatusMessage(const QString &message);
+
 private slots:
     void openSerialPort();
     void closeSerialPort();
