@@ -37,7 +37,13 @@ private:
 private slots:
     void openSerialPort();
     void closeSerialPort();
-    void TogglePushButton();
+    void ToggleStartEnginePushButton();
+    void ClickKpPlus();
+    void ClickKpMinus();
+    void ClickKiPlus();
+    void ClickKiMinus();
+    void ClickKdPlus();
+    void ClickKdMinus();
     void readData();
     void handleError(QSerialPort::SerialPortError error);
     void realtimeDataSlot();

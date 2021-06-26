@@ -27,12 +27,24 @@ MainWindow::MainWindow(QWidget *parent)
     m_ui->customPlot->yAxis->setRange(0, 180);
     m_ui->customPlot->yAxis2->setRange(-50, 50);
 
+    // set ON/OFF pushButton color
+    QPalette pal = m_ui->pushButton_startEngine->palette();
+    pal.setColor(QPalette::Button, QColor(Qt::green));
+    m_ui->pushButton_startEngine->setPalette(pal);
+    m_ui->pushButton_startEngine->update();
+
     QSharedPointer<QCPAxisTickerTime> timeTicker(new QCPAxisTickerTime);
     m_ui->customPlot->xAxis->setTicker(timeTicker);
     timeTicker->setTimeFormat("%h:%m:%s");
     //m_ui->customPlot->axisRect()->setupFullAxesBox();
 
-    connect(m_ui->pushButton,SIGNAL(clicked()),this,SLOT(TogglePushButton()));
+    connect(m_ui->pushButton_startEngine,SIGNAL(clicked()),this,SLOT(ToggleStartEnginePushButton()));
+    connect(m_ui->pushButton_Kp_plus,SIGNAL(clicked()),this,SLOT(ClickKpPlus()));
+    connect(m_ui->pushButton_Kp_minus,SIGNAL(clicked()),this,SLOT(ClickKpMinus()));
+    connect(m_ui->pushButton_Ki_plus,SIGNAL(clicked()),this,SLOT(ClickKiPlus()));
+    connect(m_ui->pushButton_Ki_minus,SIGNAL(clicked()),this,SLOT(ClickKiMinus()));
+    connect(m_ui->pushButton_Kd_plus,SIGNAL(clicked()),this,SLOT(ClickKdPlus()));
+    connect(m_ui->pushButton_Kd_minus,SIGNAL(clicked()),this,SLOT(ClickKdMinus()));
     connect(m_ui->actionConnect, &QAction::triggered, this, &MainWindow::openSerialPort);
     connect(m_ui->actionDisconnect, &QAction::triggered, this, &MainWindow::closeSerialPort);
     connect(m_ui->actionConfigure, &QAction::triggered, m_settings, &SettingsDialog::show);
@@ -122,9 +134,19 @@ void MainWindow::handleError(QSerialPort::SerialPortError error)
     }
 }
 
-void MainWindow::TogglePushButton() {
+void MainWindow::ToggleStartEnginePushButton() {
+    QPalette pal = m_ui->pushButton_startEngine->palette();
     pushButtonState = !pushButtonState;
     qDebug() << pushButtonState;
+    if(pushButtonState == true) {
+        m_ui->pushButton_startEngine->setText("ON");
+        pal.setColor(QPalette::Button, QColor(Qt::green));
+    } else {
+        m_ui->pushButton_startEngine->setText("OFF");
+        pal.setColor(QPalette::Button, QColor(Qt::red));
+    }
+    m_ui->pushButton_startEngine->setPalette(pal);
+    m_ui->pushButton_startEngine->update();
 }
 
 void MainWindow::showStatusMessage(const QString &message) {
@@ -138,6 +160,25 @@ void MainWindow::realtimeDataSlot() {
     // make key axis range scroll with the data (at a constant range size of 8):
     m_ui->customPlot->xAxis->setRange(elapsedTime, 5000, Qt::AlignRight);
     m_ui->customPlot->replot();
+}
+
+void MainWindow::ClickKpPlus() {
+    m_serial->write(COMMAND_RAISE_P);
+}
+void MainWindow::ClickKpMinus() {
+    m_serial->write(COMMAND_LOWER_P);
+}
+void MainWindow::ClickKiPlus() {
+    m_serial->write(COMMAND_RAISE_I);
+}
+void MainWindow::ClickKiMinus() {
+    m_serial->write(COMMAND_LOWER_I);
+}
+void MainWindow::ClickKdPlus() {
+    m_serial->write(COMMAND_RAISE_D);
+}
+void MainWindow::ClickKdMinus() {
+    m_serial->write(COMMAND_LOWER_D);
 }
 
 MainWindow::~MainWindow()
