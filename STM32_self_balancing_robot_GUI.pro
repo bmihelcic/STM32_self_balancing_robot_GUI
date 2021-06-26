@@ -15,6 +15,7 @@ SOURCES += \
     settingsdialog.cpp
 
 HEADERS += \
+    conf.h \
     mainwindow.h \
     qcustomplot.h \
     settingsdialog.h

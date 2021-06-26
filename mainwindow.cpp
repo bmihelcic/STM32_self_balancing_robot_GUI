@@ -5,6 +5,8 @@
 #include <QMessageBox>
 #include <QTime>
 #include <QElapsedTimer>
+#include "conf.h"
+#include <QList>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
@@ -17,20 +19,18 @@ MainWindow::MainWindow(QWidget *parent)
     m_ui->actionConnect->setEnabled(true);
     m_ui->actionDisconnect->setEnabled(false);
     m_ui->actionConfigure->setEnabled(true);
-
     m_ui->statusBar->addWidget(m_status);
-
     m_ui->customPlot->addGraph();
-    m_ui->customPlot->graph(0)->setPen(QPen(QColor(40, 110, 255)));
-    //m_ui->customPlot->xAxis->setRange(0, 500);
-    //m_ui->customPlot->yAxis->setRange(0, 100);
-
+    m_ui->customPlot->addGraph(m_ui->customPlot->xAxis, m_ui->customPlot->yAxis2);
+    m_ui->customPlot->graph(0)->setPen(QPen(QColor(40, 110, 255))); // blue line
+    m_ui->customPlot->graph(1)->setPen(QPen(QColor(255, 110, 40))); // red line
+    m_ui->customPlot->yAxis->setRange(0, 180);
+    m_ui->customPlot->yAxis2->setRange(-50, 50);
 
     QSharedPointer<QCPAxisTickerTime> timeTicker(new QCPAxisTickerTime);
-    timeTicker->setTimeFormat("%h:%m:%s");
     m_ui->customPlot->xAxis->setTicker(timeTicker);
+    timeTicker->setTimeFormat("%h:%m:%s");
     //m_ui->customPlot->axisRect()->setupFullAxesBox();
-
 
     connect(m_ui->pushButton,SIGNAL(clicked()),this,SLOT(TogglePushButton()));
     connect(m_ui->actionConnect, &QAction::triggered, this, &MainWindow::openSerialPort);
@@ -39,12 +39,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_serial, &QSerialPort::errorOccurred, this, &MainWindow::handleError);
     connect(m_serial, &QSerialPort::readyRead, this, &MainWindow::readData);
 
-
-    static QTimer mainTimer;
     // setup a timer that repeatedly calls MainWindow::realtimeDataSlot:
     //mainTimer.callOnTimeout(SLOT(realtimeDataSlot()));
     connect(&mainTimer, SIGNAL(timeout()), this, SLOT(realtimeDataSlot()));
-    mainTimer.start(0); // Interval 0 means to refresh as fast as possible
+    mainTimer.start(PLOT_REFRESH_TIME); // Interval 0 means to refresh as fast as possible
 
     elapsedTimer.start();
 }
@@ -64,9 +62,7 @@ void MainWindow::openSerialPort()
         m_ui->actionConnect->setEnabled(false);
         m_ui->actionDisconnect->setEnabled(true);
         m_ui->actionConfigure->setEnabled(false);
-        showStatusMessage(tr("Connected to %1 : %2, %3, %4, %5, %6")
-                          .arg(p.name).arg(p.stringBaudRate).arg(p.stringDataBits)
-                          .arg(p.stringParity).arg(p.stringStopBits).arg(p.stringFlowControl));
+        showStatusMessage(tr("Connected to %1").arg("Self-balancing robot"));
     } else {
         QMessageBox::critical(this, tr("Error"), m_serial->errorString());
         showStatusMessage(tr("Open error"));
@@ -82,24 +78,39 @@ void MainWindow::closeSerialPort()
     m_ui->actionDisconnect->setEnabled(false);
     m_ui->actionConfigure->setEnabled(true);
     showStatusMessage(tr("Disconnected"));
+    robotAngle = 0;
+    pidError = 0;
+    m_ui->label_Kp_value->setText("N/A");
+    m_ui->label_Ki_value->setText("N/A");
+    m_ui->label_Kd_value->setText("N/A");
 }
 
 void MainWindow::readData()
 {
-    static QVector<double> x, y; // initialize with entries 0..100
-    static int i= 0;
-    char data[10];
-    QString string = data;
-    float num;
-    m_serial->readLine(data,10);
-    num = string.toFloat();
-    if(num != 0) {
-        i++;
-        x.append(i);
-        y.append(num);
-        qDebug() << num;
-        m_ui->customPlot->graph(0)->addData(x, y);
-        m_ui->customPlot->replot();
+    QByteArray byteArr;
+    QList<QByteArray> signalsPtr;
+
+    byteArr = m_serial->readAll();
+
+    if(!(byteArr.front() != '!' || byteArr.size() < 8)) {
+        signalsPtr = byteArr.split('\t');
+    }
+    if(signalsPtr.size() == 2) {
+        robotAngle = (signalsPtr[0].right(signalsPtr[0].size()-1)).toFloat();
+        pidError = signalsPtr[1].toFloat();
+    } else if (signalsPtr.size() == 6) {
+        robotAngle = (signalsPtr[0].right(signalsPtr[0].size()-1)).toFloat();
+        pidError = signalsPtr[1].toFloat();
+        m_ui->label_Kp_value->setText(signalsPtr[2]);
+        m_ui->label_Ki_value->setText(signalsPtr[3]);
+        m_ui->label_Kd_value->setText(signalsPtr[4]);
+/*
+        qDebug() << byteArr << signalsPtr.size();
+        for (int i=0; i< signalsPtr.size(); i++) {
+            qDebug() << signalsPtr[i];
+        }
+        qDebug() << "\r\n";
+*/
     }
 }
 
@@ -121,34 +132,12 @@ void MainWindow::showStatusMessage(const QString &message) {
 }
 
 void MainWindow::realtimeDataSlot() {
-    // calculate two new data points:
-    double key = elapsedTimer.elapsed(); // time elapsed since start of demo, in milliseconds
-    static double lastPointKey = 0;
-    if (key-lastPointKey > 50) // at most add point every 70 ms
-    {
-      // add data to lines:
-      m_ui->customPlot->graph(0)->addData(key, qSin(key));
-      // rescale value (vertical) axis to fit the current data:
-      m_ui->customPlot->graph(0)->rescaleValueAxis();
-      lastPointKey = key;
-
+    double elapsedTime = elapsedTimer.elapsed(); // time elapsed since start of demo, in milliseconds
+    m_ui->customPlot->graph(0)->addData(elapsedTime, robotAngle);
+    m_ui->customPlot->graph(1)->addData(elapsedTime, pidError);
     // make key axis range scroll with the data (at a constant range size of 8):
-    m_ui->customPlot->xAxis->setRange(key, 5000, Qt::AlignRight);
+    m_ui->customPlot->xAxis->setRange(elapsedTime, 5000, Qt::AlignRight);
     m_ui->customPlot->replot();
-}
-    // calculate frames per second:
-    static double lastFpsKey;
-    static int frameCount;
-    ++frameCount;
-    if (key-lastFpsKey > 2) // average fps over 2 seconds
-    {
-      showStatusMessage(
-            tr("%1 FPS, Total Data points: %2")
-            .arg(frameCount/(key-lastFpsKey), 0, 'f', 0)
-            .arg(m_ui->customPlot->graph(0)->data()->size()));
-      lastFpsKey = key;
-      frameCount = 0;
-    }
 }
 
 MainWindow::~MainWindow()

@@ -33,7 +33,7 @@
       <item>
        <widget class="QLabel" name="label_Kp_value">
         <property name="text">
-         <string>TextLabel</string>
+         <string>N/A</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -53,7 +53,7 @@
       <item>
        <widget class="QLabel" name="label_Kd_value">
         <property name="text">
-         <string>TextLabel</string>
+         <string>N/A</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -73,7 +73,7 @@
       <item>
        <widget class="QLabel" name="label_Ki_value">
         <property name="text">
-         <string>TextLabel</string>
+         <string>N/A</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>

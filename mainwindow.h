@@ -23,6 +23,9 @@ public:
 
 private:
     QElapsedTimer elapsedTimer;
+    float robotAngle = 0;
+    float pidError = 0;
+    QTimer mainTimer;
     Ui::MainWindow *m_ui = nullptr;
     QLabel *m_status = nullptr;
     Console *m_console = nullptr;
