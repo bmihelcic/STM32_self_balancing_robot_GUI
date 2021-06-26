@@ -22,6 +22,7 @@ public:
     ~MainWindow();    
 
 private:
+    QElapsedTimer elapsedTimer;
     Ui::MainWindow *m_ui = nullptr;
     QLabel *m_status = nullptr;
     Console *m_console = nullptr;
@@ -36,5 +37,6 @@ private slots:
     void TogglePushButton();
     void readData();
     void handleError(QSerialPort::SerialPortError error);
+    void realtimeDataSlot();
 };
 #endif // MAINWINDOW_H
