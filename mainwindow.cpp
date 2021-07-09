@@ -39,12 +39,18 @@ MainWindow::MainWindow(QWidget *parent)
     //m_ui->customPlot->axisRect()->setupFullAxesBox();
 
     connect(m_ui->pushButton_startEngine,SIGNAL(clicked()),this,SLOT(ToggleStartEnginePushButton()));
-    connect(m_ui->pushButton_Kp_plus,SIGNAL(clicked()),this,SLOT(ClickKpPlus()));
-    connect(m_ui->pushButton_Kp_minus,SIGNAL(clicked()),this,SLOT(ClickKpMinus()));
-    connect(m_ui->pushButton_Ki_plus,SIGNAL(clicked()),this,SLOT(ClickKiPlus()));
-    connect(m_ui->pushButton_Ki_minus,SIGNAL(clicked()),this,SLOT(ClickKiMinus()));
-    connect(m_ui->pushButton_Kd_plus,SIGNAL(clicked()),this,SLOT(ClickKdPlus()));
-    connect(m_ui->pushButton_Kd_minus,SIGNAL(clicked()),this,SLOT(ClickKdMinus()));
+    connect(m_ui->pushButton_Kp_plus_1,SIGNAL(clicked()),this,SLOT(ClickKpPlus()));
+    connect(m_ui->pushButton_Kp_minus_1,SIGNAL(clicked()),this,SLOT(ClickKpMinus()));
+    connect(m_ui->pushButton_Ki_plus_0_1,SIGNAL(clicked()),this,SLOT(ClickKiPlus()));
+    connect(m_ui->pushButton_Ki_minus_0_1,SIGNAL(clicked()),this,SLOT(ClickKiMinus()));
+    connect(m_ui->pushButton_Kd_plus_1,SIGNAL(clicked()),this,SLOT(ClickKdPlus()));
+    connect(m_ui->pushButton_Kd_minus_1,SIGNAL(clicked()),this,SLOT(ClickKdMinus()));
+    connect(m_ui->pushButton_Kp_plus_10,SIGNAL(clicked()),this,SLOT(ClickKpPlus10()));
+    connect(m_ui->pushButton_Kp_minus_10,SIGNAL(clicked()),this,SLOT(ClickKpMinus10()));
+    connect(m_ui->pushButton_Ki_plus_1,SIGNAL(clicked()),this,SLOT(ClickKiPlus1()));
+    connect(m_ui->pushButton_Ki_minus_1,SIGNAL(clicked()),this,SLOT(ClickKiMinus1()));
+    connect(m_ui->pushButton_Kd_plus_10,SIGNAL(clicked()),this,SLOT(ClickKdPlus10()));
+    connect(m_ui->pushButton_Kd_minus_10,SIGNAL(clicked()),this,SLOT(ClickKdMinus10()));
     connect(m_ui->actionConnect, &QAction::triggered, this, &MainWindow::openSerialPort);
     connect(m_ui->actionDisconnect, &QAction::triggered, this, &MainWindow::closeSerialPort);
     connect(m_ui->actionConfigure, &QAction::triggered, m_settings, &SettingsDialog::show);
@@ -113,6 +119,7 @@ void MainWindow::readData()
     } else if (signalsPtr.size() == 6) {
         robotAngle = (signalsPtr[0].right(signalsPtr[0].size()-1)).toFloat();
         pidError = signalsPtr[1].toFloat();
+        m_ui->label_robotAngle->setText(signalsPtr[0].right(signalsPtr[0].size()-1));
         m_ui->label_Kp_value->setText(signalsPtr[2]);
         m_ui->label_Ki_value->setText(signalsPtr[3]);
         m_ui->label_Kd_value->setText(signalsPtr[4]);
@@ -135,9 +142,9 @@ void MainWindow::handleError(QSerialPort::SerialPortError error)
 }
 
 void MainWindow::ToggleStartEnginePushButton() {
+    m_serial->write(COMMAND_ENABLE_MOTORS);
     QPalette pal = m_ui->pushButton_startEngine->palette();
     pushButtonState = !pushButtonState;
-    qDebug() << pushButtonState;
     if(pushButtonState == true) {
         m_ui->pushButton_startEngine->setText("ON");
         pal.setColor(QPalette::Button, QColor(Qt::green));
@@ -165,20 +172,38 @@ void MainWindow::realtimeDataSlot() {
 void MainWindow::ClickKpPlus() {
     m_serial->write(COMMAND_RAISE_P);
 }
+void MainWindow::ClickKpPlus10() {
+    m_serial->write(COMMAND_RAISE_P10);
+}
 void MainWindow::ClickKpMinus() {
     m_serial->write(COMMAND_LOWER_P);
+}
+void MainWindow::ClickKpMinus10() {
+    m_serial->write(COMMAND_LOWER_P10);
 }
 void MainWindow::ClickKiPlus() {
     m_serial->write(COMMAND_RAISE_I);
 }
+void MainWindow::ClickKiPlus1() {
+    m_serial->write(COMMAND_RAISE_I1);
+}
 void MainWindow::ClickKiMinus() {
     m_serial->write(COMMAND_LOWER_I);
+}
+void MainWindow::ClickKiMinus1() {
+    m_serial->write(COMMAND_LOWER_I1);
 }
 void MainWindow::ClickKdPlus() {
     m_serial->write(COMMAND_RAISE_D);
 }
+void MainWindow::ClickKdPlus10() {
+    m_serial->write(COMMAND_RAISE_D10);
+}
 void MainWindow::ClickKdMinus() {
     m_serial->write(COMMAND_LOWER_D);
+}
+void MainWindow::ClickKdMinus10() {
+    m_serial->write(COMMAND_LOWER_D10);
 }
 
 MainWindow::~MainWindow()
